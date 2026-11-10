@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Church Timer - 999 Minutes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono:wght@700&display=swap');
+
+        body {
+            background-color: #000;
+            color: #00FF00; /* Neon Green for high visibility, change to #ffcc00 for Yellow */
+            font-family: 'Roboto Mono', monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+
+                /* Large display scaling */
+        #timer-display {
+            font-size: 25vw; /* Increased for MMM:SS format */
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -5px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Controls Panel */
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid #444;
+            transition: opacity 0.5s;
+            z-index: 100;
+        }
+
+        .controls.hide { opacity: 0; pointer-events: none; }
+
+        input {
+            width: 80px;
+            font-size: 24px;
+            padding: 10px;
+            text-align: center;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+        }
+
+        label { color: #aaa; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; display: block;}
+        .input-group { text-align: center; }
+
+        button {
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .btn-start { background-color: #28a745; }
+        .btn-stop { background-color: #dc3545; }
+        .btn-reset { background-color: #555; }
+
+        /* Time Expired State */
+        .expired {
+            color: #ff0000 !important;
+            animation: blink 1s infinite;
+            font-size: 18vw !important; /* Slightly smaller to ensure TIME UP! fits */
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+        <!-- Display: MMM:SS -->
+    <div id="timer-display">000:00</div>
+
+    <div class="controls" id="control-panel">
+        <div class="input-group">
+            <label>Mins</label>
+            <input type="number" id="m-input" placeholder="000" min="0" max="999">
+        </div>
+        <div class="input-group">
+            <label>Secs</label>
+            <input type="number" id="s-input" placeholder="00" min="0" max="60">
+        </div>
+        
+        <div style="margin-left: 20px; display: flex; gap: 10px;">
+            <button class="btn-start" onclick="startTimer()">Start</button>
+            <button class="btn-stop" onclick="stopTimer()">Stop</button>
+            <button class="btn-reset" onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let countdown;
+        let totalSeconds = 0;
+        let isRunning = false;
+
+        const display = document.getElementById('timer-display');
+        const controlPanel = document.getElementById('control-panel');
+
+                                function updateDisplay() {
+                                    if (totalSeconds < 0) {
+                                        display.innerText = "TIME UP!";
+                                        display.classList.add('expired');
+                                        return;
+                                    }
+
+                                    let m = Math.floor(totalSeconds / 60);
+                                    let s = totalSeconds % 60;
+            
+                                    let mStr = m.toString().padStart(3, '0');
+                                    let sStr = s.toString().padStart(2, '0');
+            
+                                    display.innerText = `${mStr}:${sStr}`;
+                                    display.classList.remove('expired');
+                                }
+
+                                function startTimer() {
+                                    if (isRunning) return;
+            
+                                    const mVal = parseInt(document.getElementById('m-input').value) || 0;
+                                    const sVal = parseInt(document.getElementById('s-input').value) || 0;
+            
+                                    if (totalSeconds <= 0) {
+                                        totalSeconds = (mVal * 60) + sVal;
+                                    }
+
+                                    if (totalSeconds <= 0) return;
+
+                                    isRunning = true;
+                                    controlPanel.classList.add('hide');
+            
+                                    updateDisplay();
+
+                                    countdown = setInterval(() => {
+                                        totalSeconds--;
+                                        updateDisplay();
+                                    }, 1000);
+                                }
+
+                                function stopTimer() {
+                                    clearInterval(countdown);
+                                    isRunning = false;
+                                    controlPanel.classList.remove('hide');
+                                }
+
+                                function resetTimer() {
+                                    clearInterval(countdown);
+                                    isRunning = false;
+                                    totalSeconds = 0;
+                                    updateDisplay();
+                                    document.getElementById('m-input').value = '';
+                                    document.getElementById('s-input').value = '';
+                                    controlPanel.classList.remove('hide');
+                                }
+
+                                // Mouse inactivity logic
+                                let timeout;
+                                document.onmousemove = function() {
+                                    controlPanel.classList.remove('hide');
+                                    clearTimeout(timeout);
+                                    timeout = setTimeout(() => {
+                                        if(isRunning) controlPanel.classList.add('hide');
+                                    }, 3000);
+                                };
+
+                                // Keyboard Shortcuts
+                                document.addEventListener('keydown', (e) => {
+                                    if (e.code === "Space") {
+                                        e.preventDefault();
+                                        if (isRunning) {
+                                            stopTimer();
+                                        } else {
+                                            // If controls are hidden, show them. If shown, start timer.
+                                            if (controlPanel.classList.contains('hide')) {
+                                                controlPanel.classList.remove('hide');
+                                            } else {
+                                                startTimer();
+                                            }
+                                        }
+                                    }
+                                    if (e.code === "KeyR") {
+                                        resetTimer();
+                                    }
+                                });
+    </script>
+</body>
+</html>
