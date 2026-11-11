@@ -113,53 +113,66 @@
         </div>
     </div>
 
-    <script>
+        <script>
         let countdown;
         let totalSeconds = 0;
         let isRunning = false;
 
         const display = document.getElementById('timer-display');
         const controlPanel = document.getElementById('control-panel');
+        const mInput = document.getElementById('m-input');
+        const sInput = document.getElementById('s-input');
 
-                                function updateDisplay() {
-                                    if (totalSeconds < 0) {
-                                        display.innerText = "TIME UP!";
-                                        display.classList.add('expired');
-                                        return;
-                                    }
+        // Load saved values on startup
+        window.onload = () => {
+            mInput.value = localStorage.getItem('timerMins') || '';
+            sInput.value = localStorage.getItem('timerSecs') || '';
+            updateDisplay();
+        };
 
-                                    let m = Math.floor(totalSeconds / 60);
-                                    let s = totalSeconds % 60;
+        function updateDisplay() {
+            if (totalSeconds < 0) {
+                display.innerText = "TIME UP!";
+                display.classList.add('expired');
+                return;
+            }
+
+            let m = Math.floor(totalSeconds / 60);
+            let s = totalSeconds % 60;
             
-                                    let mStr = m.toString().padStart(3, '0');
-                                    let sStr = s.toString().padStart(2, '0');
+            let mStr = m.toString().padStart(3, '0');
+            let sStr = s.toString().padStart(2, '0');
             
-                                    display.innerText = `${mStr}:${sStr}`;
-                                    display.classList.remove('expired');
-                                }
+            display.innerText = `${mStr}:${sStr}`;
+            display.classList.remove('expired');
+        }
 
-                                function startTimer() {
-                                    if (isRunning) return;
+        function startTimer() {
+            if (isRunning) return;
             
-                                    const mVal = parseInt(document.getElementById('m-input').value) || 0;
-                                    const sVal = parseInt(document.getElementById('s-input').value) || 0;
+            const mVal = parseInt(mInput.value) || 0;
+            const sVal = parseInt(sInput.value) || 0;
             
-                                    if (totalSeconds <= 0) {
-                                        totalSeconds = (mVal * 60) + sVal;
-                                    }
+            // Save values for next time
+            localStorage.setItem('timerMins', mInput.value);
+            localStorage.setItem('timerSecs', sInput.value);
 
-                                    if (totalSeconds <= 0) return;
+            if (totalSeconds <= 0) {
+                totalSeconds = (mVal * 60) + sVal;
+            }
 
-                                    isRunning = true;
-                                    controlPanel.classList.add('hide');
+            if (totalSeconds <= 0) return;
+
+            isRunning = true;
+            controlPanel.classList.add('hide');
             
-                                    updateDisplay();
+            updateDisplay();
 
-                                    countdown = setInterval(() => {
-                                        totalSeconds--;
-                                        updateDisplay();
-                                    }, 1000);
-                                }
+            countdown = setInterval(() => {
+                totalSeconds--;
+                updateDisplay();
+            }, 1000);
+        }
 
                                 function stopTimer() {
                                     clearInterval(countdown);
